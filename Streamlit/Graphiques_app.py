@@ -32,7 +32,7 @@ if page == "Graphique":
                     state_geo["features"][idx]['properties']['Âge'] = \
                     round(df['Âge'][index],2)
                     state_geo["features"][idx]['properties']['Urbain'] = \
-                    str(round(df['Urbain'][index],2)) + " %"
+                    str(round(100*df['Urbain'][index],2)) + " %"
                     state_geo["features"][idx]['properties']['%Like'] = \
                     str(round(df['%Like'][index],2))+" %"
 
