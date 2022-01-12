@@ -17,6 +17,7 @@ if page == "Graphique":
         df = pd.read_csv(link)
         df["Département"] = df["Département"].astype(str)
         df["Département"] = df["Département"].apply(lambda x : "0"+x if len(x)==1 else x)
+        df["Urbain"] = df["Urbain"]*100
 
         if table:
             st.write("Tableau de données : ")
@@ -32,7 +33,7 @@ if page == "Graphique":
                     state_geo["features"][idx]['properties']['Âge'] = \
                     round(df['Âge'][index],2)
                     state_geo["features"][idx]['properties']['Urbain'] = \
-                    str(round(100*df['Urbain'][index],2)) + " %"
+                    str(round(df['Urbain'][index],2)) + " %"
                     state_geo["features"][idx]['properties']['%Like'] = \
                     str(round(df['%Like'][index],2))+" %"
 
