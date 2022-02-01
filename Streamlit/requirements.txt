@@ -7,3 +7,4 @@ numpy==1.21.4
 streamlit-folium==0.4.0
 jsonschema==4.2.1
 plotly==5.5.0
+scipy==1.7.3
