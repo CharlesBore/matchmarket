@@ -1,5 +1,6 @@
 import re 
 import json
+import scipy
 import folium
 import requests
 import numpy as np
