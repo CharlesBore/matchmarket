@@ -308,8 +308,8 @@ if page == "Graphique":
                               font = dict(size = 16),
                               xaxis_title = "Nombre de vote",# titre pour x
                               yaxis_title = "campagne_id ",# titre pour y
-                              width=700,
-                              height=550)
+                              width=500,
+                              height=500)
             st.plotly_chart(fig)  
         with col2:
             df_result['color'] = df_result['color'].apply(lambda x: x.replace('[','')).apply(lambda x: x.replace(']','')).apply(lambda x: x.replace("'",''))# dans la table résult les couleurs apparaitre sous forme de list exemple [noir], on vas donc enlever les crochés pour que ca  devient noir
@@ -331,8 +331,8 @@ if page == "Graphique":
                               font = dict(size = 16),
                               xaxis_title = "Nombre de vote",
                               yaxis_title = "color ",
-                              width=700,
-                              height=550)
+                              width=500,
+                              height=500)
             st.plotly_chart(fig)
 
 ####################################################################CLUSTERS#####################################################################  
