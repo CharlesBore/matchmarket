@@ -277,7 +277,7 @@ if page == "Graphique":
         # personnaliser le graphique
         fig.update_layout(barmode='group', # mode de disposition des barres (côte à côte)
                             title_text=f'Nombre de votes pour les campagnes de type {Type_Campaign}', # titre de graphique
-                            font = dict(size = 16), # taille du police
+                            font = dict(size = 14), # taille du police
                             xaxis_title = "Nombre de votes", # titre de l'axe x
                             yaxis_title = "Matière",# titre de l'axe y
                             width = 1000,
@@ -400,24 +400,25 @@ if page == "Cluster":
                                     show_rug=False, #Cache la règlette affichée par défaut dans plotly mais qui n'apporte rien
                                     colors = ["gold","deeppink","orange","lemonchiffon"]) #Liste de couleur pour identifier chacun des clusters
             fig.update_layout(title_text="Distribution de l'Age", #Titre du graphique
-                              font = dict(size = 16),#Pour mettre une police un peu plus grosse
-                              width = 500,
-                              yaxis_title = "Nombre de client normalisé", #Label de y
+                              font = dict(size = 14),#Pour mettre une police un peu plus grosse
+                              width = 470,
+                              height = 500,
+                              yaxis_title = "Nombre de clients", #Label de y
                               xaxis_title = "Âge") #Label de x
             st.plotly_chart(fig) 
         ##############GRAPHIQUE POURCENTAGE DE MILIEU URBAIN :
         with col3:
-            labels = ["Supérieur à 5000 hab","Inférieur à 5000 hab"] #Label pour la légende
+            labels = ["Supérieure à 5000 hab","Inférieure à 5000 hab"] #Label pour la légende
             values = np.array([round(df_result["Urbain"].mean()*100,2),100-round(df_result["Urbain"].mean()*100,2)]) #Créer un array avec le% de personnes urbains et le % de personnes rurales
             fig = go.Figure(data=[go.Pie(labels=labels, #Créer le camembert avec la legénde
                                      values=values, #les deux % (ruraux et urbain)
                                      hole=.5, #Pour faire un donut plutôt qu'un camembert
                                      marker_colors=["deeppink","gold"], #Met les deux couleurs Urbain/Rural
                                      pull=[0.2, 0])], #pour exploder (décaller) la part Urbain 
-                            layout={"title":"Pourcentage de personnes<br>venant de villes suppérieur à 5000 hab"}) #Titre du graphique
-            fig.update_layout(font = dict(size = 16),
-                              width = 500,
-                              legend_title = "Ville") #Titre du bloc légende
+                            layout={"title":"Provencance des Praedicters"}) #Titre du graphique
+            fig.update_layout(font = dict(size = 14),
+                              width = 470,
+                              legend_title = "Commune") #Titre du bloc légende
             st.plotly_chart(fig)
         
         ##############GRAPHES STYLES PREF EN FONCTION DE LA TRANCHE D'AGE DES USERS :
