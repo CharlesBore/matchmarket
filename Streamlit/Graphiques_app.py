@@ -467,13 +467,13 @@ if page == "Cluster":
                              x = ['Access', 'Mass', 'Premium', 'Haut de Gamme', 'Luxe', 'Bio'], 
                              orientation='h', 
                              color_discrete_sequence= px.colors.sequential.Plasma_r)
-                fig.update_layout(title = "Catégories de marques préférées en fonction de la tranche d'âge des utilisateurs", #Ajout du titre du graphe
+                fig.update_layout(title = "Gamme de marques préférées en fonction de la tranche d'âges des utilisateurs", #Ajout du titre du graphe
                               xaxis_title = "Pourcentage d'utilisateurs", #titre des axes
-                              yaxis_title = "Tranches d'âges  des utilisateurs",
+                              yaxis_title = "Tranche d'âges  des utilisateurs",
                               legend_title = "Catégories préférencielles",  #titre de la légende
                               height = 400, #dimensions du graphe
-                              width = 1000,
-                              font = dict(size = 16)) #taille de la police
+                              width = 900,
+                              font = dict(size = 14)) #taille de la police
                 st.plotly_chart(fig)
             else : #Condition : si l'utilisateur a sélectionné les marques de mode (variable pref_for_ages précédemment définie par le bouton radio)
                 df_agescut = df_agescut.groupby('Age')[['access_mode', 'mass_mode', 'premium_mode', 'hdg_mode',"prestige_mode", 'luxe_mode', "vintage_mode","eco_responsable_mode"]].agg('sum')
@@ -489,13 +489,13 @@ if page == "Cluster":
                              x = ["Access","Mass","Premium","Haut de Gamme","Prestige","Luxe","Vintage","Eco Responsable"], 
                              orientation='h', 
                              color_discrete_sequence= px.colors.sequential.Plasma_r)
-                fig.update_layout(title = "Catégories de marques préférées en fonction de la tranche d'âge des utilisateurs", #Ajout du titre du graphe
+                fig.update_layout(title = "Gamme de marques préférées en fonction de la tranche d'âge des utilisateurs", #Ajout du titre du graphe
                               xaxis_title = "Pourcentage d'utilisateurs", #titre des axes
                               yaxis_title = "Tranches d'âges  des utilisateurs",
                               legend_title = "Catégories préférencielles", #titre de la légende 
                               height = 400, #dimensions du graphe
-                              width = 1000,
-                              font = dict(size = 16)) #taille de la police
+                              width = 900,
+                              font = dict(size = 14)) #taille de la police
                 st.plotly_chart(fig)
         
         col1,col2,col3 = st.columns(3)
@@ -521,8 +521,8 @@ if page == "Cluster":
                               yaxis_title = "Nombre de Sélection moyen", #Label y
                               legend_title = "Cluster", #Titre du bloc légende
                               height = 550, #Hauteur du graphique (afin que les trois graphiques en bar de la page soient homogènes)
-                              width = 430,
-                              font = dict(size = 16)) #Pour augmenter la taille de la police
+                              width = 400,
+                              font = dict(size = 14)) #Pour augmenter la taille de la police
             st.plotly_chart(fig) #Pour afficher le graphique
         ##############GRAPHIQUE MARQUES DE BEAUTE PREFEREES:  
         with col2:
@@ -543,8 +543,8 @@ if page == "Cluster":
                               yaxis_title = "Nombre de Sélection moyen", #Label y
                               legend_title = "Cluster", #Titre du bloc légende
                               height = 425, #Hauteur du graphique (afin que les trois graphiques en bar de la page soient homogènes)
-                              width = 430,
-                              font = dict(size = 16)) #Pour augmenter la taille de la police
+                              width = 400,
+                              font = dict(size = 14)) #Pour augmenter la taille de la police
             st.plotly_chart(fig) #Pour afficher le graphique
         ##############GRAPHIQUE MARQUES DE MODE PREFEREES:     
         with col3:
@@ -564,8 +564,8 @@ if page == "Cluster":
             fig.update_layout(title = "Nombre de Sélection moyen par Préférence de<br>Marque de Mode", #Titre du graphique
                               yaxis_title = "Nombre de Sélection moyen", #Label y
                               legend_title = "Cluster", #Titre du bloc légende
-                              width = 430,
-                              font = dict(size = 16)) #Pour augmenter la taille de la police
+                              width = 400,
+                              font = dict(size = 14)) #Pour augmenter la taille de la police
             st.plotly_chart(fig) #Pour afficher le graphique
             
         #Ecris le titre 2 de la page : 
