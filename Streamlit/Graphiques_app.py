@@ -601,7 +601,7 @@ if page == "Cluster":
                                 "color":"Type de votes"}, #Titre du bloc de legende
                         title = "nombre de Like/Dislike d'articles ayant le critère ciblé") #Titre du graphique
             fig.update_layout(font = dict(size = 14),
-                             width = 500) #Augmente la taille de la police
+                             width = 550) #Augmente la taille de la police
             st.plotly_chart(fig) #Pour afficher le graphique
             
         ##############GRAPHIQUE LIKE/DISLIKE DES PRIX:  
@@ -624,7 +624,7 @@ if page == "Cluster":
                                 "y": "", #On supprime le label de l'axe y car cela est déjà identifié par le type de catégories
                                 "color":"Type de vote"}, #Titre du bloc de legende
                         title = 'Prix moyen des produits Likés vs Dislikés', #Titre du graphique
-                        width = 500,
+                        width = 550,
                         height=250) #Hauteur du graphique pour qu'il soit pas trop large
             fig.update_layout(font = dict(size = 14)) #Augmente la taille de la police
             st.plotly_chart(fig) #Pour afficher le graphique
@@ -650,7 +650,7 @@ if page == "Cluster":
                              title="Corrélation", 
                              color = "cluster",
                              color_discrete_sequence= px.colors.sequential.Plasma_r)
-            fig.update_layout(width = 500)
+            fig.update_layout(width = 550)
             st.plotly_chart(fig)
         with col2:
             fig = px.scatter(df_perso, 
@@ -659,7 +659,7 @@ if page == "Cluster":
                              title="Corrélation", 
                              color = "cluster",
                              color_discrete_sequence= px.colors.sequential.Plasma_r)
-            fig.update_layout(width = 500)
+            fig.update_layout(width = 550)
             st.plotly_chart(fig)
         
         
