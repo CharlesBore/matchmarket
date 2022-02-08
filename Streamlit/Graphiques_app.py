@@ -84,7 +84,7 @@ if page == "Graphique":
                           max_words=30, 
                           collocations=False, 
                           contour_color='#FFCF00',
-                          contour_width = 0.00001,
+                          contour_width = 2,
                           min_font_size = 7,
                           prefer_horizontal = 1,
                           mask = mask).generate(text_new)
@@ -280,7 +280,7 @@ if page == "Graphique":
                             font = dict(size = 14), # taille du police
                             xaxis_title = "Nombre de votes", # titre de l'axe x
                             yaxis_title = "Matière",# titre de l'axe y
-                            width = 1000,
+                            width = 900,
                             height = 500) 
         st.plotly_chart(fig)  #afficher le graphique        
 
@@ -308,7 +308,7 @@ if page == "Graphique":
                               font = dict(size = 14),
                               xaxis_title = "Nombre de votes",# titre pour x
                               yaxis_title = "campagne_id ",# titre pour y
-                              width=600,
+                              width=500,
                               height=500)
             st.plotly_chart(fig)  
         with col2:
@@ -331,7 +331,7 @@ if page == "Graphique":
                               font = dict(size = 14),
                               xaxis_title = "Nombre de votes",
                               yaxis_title = "couleur ",
-                              width=600,
+                              width=500,
                               height=500)
             st.plotly_chart(fig)
 
