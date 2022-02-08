@@ -305,10 +305,10 @@ if page == "Graphique":
             ])                              
             fig.update_layout(barmode='group',
                               title_text="Nombre de votes like, dislike selon les couleurs<br>et par campagne ",# titre du graphique
-                              font = dict(size = 16),
+                              font = dict(size = 15),
                               xaxis_title = "Nombre de votes",# titre pour x
                               yaxis_title = "campagne_id ",# titre pour y
-                              width=500,
+                              width=550,
                               height=500)
             st.plotly_chart(fig)  
         with col2:
@@ -328,10 +328,10 @@ if page == "Graphique":
             ])                              
             fig.update_layout(barmode='group',
                               title_text="Top 10 des couleurs les plus présentes",
-                              font = dict(size = 16),
+                              font = dict(size = 15),
                               xaxis_title = "Nombre de votes",
                               yaxis_title = "couleur ",
-                              width=500,
+                              width=550,
                               height=500)
             st.plotly_chart(fig)
 
