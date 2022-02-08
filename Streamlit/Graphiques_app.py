@@ -276,10 +276,10 @@ if page == "Graphique":
                        marker=dict(color = 'deeppink'))])  # choisir la couleur rose                          
         # personnaliser le graphique
         fig.update_layout(barmode='group', # mode de disposition des barres (côte à côte)
-                            title_text=f'Nombre de vote pour la campagne {Type_Campaign}', # titre de graphique
+                            title_text=f'Nombre de votes pour les campagnes de type {Type_Campaign}', # titre de graphique
                             font = dict(size = 16), # taille du police
-                            xaxis_title = "Nombre de vote", # titre de l'axe x
-                            yaxis_title = "Matières",# titre de l'axe y
+                            xaxis_title = "Nombre de votes", # titre de l'axe x
+                            yaxis_title = "Matière",# titre de l'axe y
                             width = 1000,
                             height = 500) 
         st.plotly_chart(fig)  #afficher le graphique        
@@ -304,9 +304,9 @@ if page == "Graphique":
                 go.Bar(name= 'Dislike-vif', y=df1.index.get_level_values(0), x = df1['vif_dislike'], orientation='h',marker=dict(color = 'deeppink'))#pour mettre la couleur deeppink pour les bars dislike-vif
             ])                              
             fig.update_layout(barmode='group',
-                              title_text="Nombre de vote like, dislike selon les couleurs et  par campagne ",# titre du graphique
+                              title_text="Nombre de votes like, dislike selon les couleurs<br>et par campagne ",# titre du graphique
                               font = dict(size = 16),
-                              xaxis_title = "Nombre de vote",# titre pour x
+                              xaxis_title = "Nombre de votes",# titre pour x
                               yaxis_title = "campagne_id ",# titre pour y
                               width=500,
                               height=500)
@@ -327,10 +327,10 @@ if page == "Graphique":
                 go.Bar(name= 'Dislike', y=df1.index.get_level_values(0), x = df1['product name_dislike'], orientation='h',marker=dict(color = 'deeppink'))
             ])                              
             fig.update_layout(barmode='group',
-                              title_text="Top 10 des couleurs que les plus présenté",
+                              title_text="Top 10 des couleurs les plus présentes",
                               font = dict(size = 16),
-                              xaxis_title = "Nombre de vote",
-                              yaxis_title = "color ",
+                              xaxis_title = "Nombre de votes",
+                              yaxis_title = "couleur ",
                               width=500,
                               height=500)
             st.plotly_chart(fig)
