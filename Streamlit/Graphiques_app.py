@@ -649,8 +649,8 @@ if page == "Cluster":
                              y=scatter_y_1, 
                              title="Corrélation", 
                              color = "cluster",
-                             color_discrete_sequence= px.colors.sequential.Plasma_r,
-                            widht = 500)
+                             color_discrete_sequence= px.colors.sequential.Plasma_r)
+            fig.update_layout(width = 500)
             st.plotly_chart(fig)
         with col2:
             fig = px.scatter(df_perso, 
@@ -658,8 +658,8 @@ if page == "Cluster":
                              y=scatter_y_2, 
                              title="Corrélation", 
                              color = "cluster",
-                             color_discrete_sequence= px.colors.sequential.Plasma_r,
-                            width = 500)
+                             color_discrete_sequence= px.colors.sequential.Plasma_r)
+            fig.update_layout(width = 500)
             st.plotly_chart(fig)
         
         
