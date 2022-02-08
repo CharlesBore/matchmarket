@@ -624,6 +624,7 @@ if page == "Cluster":
                                 "y": "", #On supprime le label de l'axe y car cela est déjà identifié par le type de catégories
                                 "color":"Type de vote"}, #Titre du bloc de legende
                         title = 'Prix moyen des produits Likés vs Dislikés', #Titre du graphique
+                        width = 500,
                         height=250) #Hauteur du graphique pour qu'il soit pas trop large
             fig.update_layout(font = dict(size = 14)) #Augmente la taille de la police
             st.plotly_chart(fig) #Pour afficher le graphique
@@ -648,7 +649,8 @@ if page == "Cluster":
                              y=scatter_y_1, 
                              title="Corrélation", 
                              color = "cluster",
-                             color_discrete_sequence= px.colors.sequential.Plasma_r)
+                             color_discrete_sequence= px.colors.sequential.Plasma_r,
+                            widht = 500)
             st.plotly_chart(fig)
         with col2:
             fig = px.scatter(df_perso, 
@@ -656,7 +658,8 @@ if page == "Cluster":
                              y=scatter_y_2, 
                              title="Corrélation", 
                              color = "cluster",
-                             color_discrete_sequence= px.colors.sequential.Plasma_r)
+                             color_discrete_sequence= px.colors.sequential.Plasma_r,
+                            width = 500)
             st.plotly_chart(fig)
         
         
