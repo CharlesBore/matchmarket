@@ -280,7 +280,7 @@ if page == "Graphique":
                             font = dict(size = 16), # taille du police
                             xaxis_title = "Nombre de vote", # titre de l'axe x
                             yaxis_title = "Matières",# titre de l'axe y
-                            width = 500,
+                            width = 1000,
                             height = 500) 
         st.plotly_chart(fig)  #afficher le graphique        
 
