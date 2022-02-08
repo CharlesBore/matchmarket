@@ -418,7 +418,7 @@ if page == "Cluster":
                             layout={"title":"Provenance des Praedicters"}) #Titre du graphique
             fig.update_layout(font = dict(size = 14),
                               width = 470,
-                              legend_title = "Commune") #Titre du bloc légende
+                              legend_title = "Population de la commune") #Titre du bloc légende
             st.plotly_chart(fig)
         
         ##############GRAPHES STYLES PREF EN FONCTION DE LA TRANCHE D'AGE DES USERS :
@@ -450,8 +450,8 @@ if page == "Cluster":
                               yaxis_title = "Tranches d'âges des utilisateurs",
                               legend_title = "Préférence stylistique", #titre de la légende 
                               height = 400, #dimensions du graphe
-                              width = 1000,
-                              font = dict(size = 16)) #taille de la police
+                              width = 900,
+                              font = dict(size = 14)) #taille de la police
                 st.plotly_chart(fig)
             elif pref_for_ages == "Marques de Beauté préférées" : #Condition : si l'utilisateur a sélectionné les marques de beauté (variable pref_for_ages précédemment définie par le bouton radio)
                 df_agescut = df_agescut.groupby('Age')[['access_brand', 'mass_brand', 'premium_brand', 'hdg_brand', 'luxe_brand', 'bio_brand']].agg('sum') #Regroupement par ages
