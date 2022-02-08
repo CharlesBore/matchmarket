@@ -1,14 +1,17 @@
 import re 
 import json
-import scipy
 import folium
 import requests
 import numpy as np
 import pandas as pd
 from PIL import Image
 import streamlit as st
+from io import BytesIO
 import plotly.express as px
 from requests.api import post
+from wordcloud import STOPWORDS
+from wordcloud import WordCloud
+import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 import plotly.figure_factory as ff
 from plotly.subplots import make_subplots
@@ -54,6 +57,43 @@ if page == "Graphique":
     if table:
         st.write("Tableau de données : ")
         df_result
+    campaign_wc = df_result["type_Campaign"].iloc[0]
+    if len(df_result["type_Campaign"].unique())==1:
+        if campaign_wc =="Cosmetique":
+            url = requests.get("https://github.com/FlorianMimolle/matchmarket/blob/main/Streamlit/black-white-silhouette-perfume-bottle-600w-1037202859.png?raw=true")
+        elif campaign_wc =="Deco":
+            url = requests.get("https://github.com/FlorianMimolle/matchmarket/blob/main/Streamlit/Sans%20titre.png?raw=true")
+        else: 
+            url = requests.get("https://github.com/FlorianMimolle/matchmarket/blob/main/Streamlit/black-dress-clipart.jpg?raw=true")
+    else:
+        url = requests.get("https://github.com/FlorianMimolle/matchmarket/blob/main/Streamlit/black-dress-clipart.jpg?raw=true")
+    
+    def couleur(*args, **kwargs):
+        import random
+        return "rgb(250, 0, {})".format(random.randint(100, 255))
+    
+    img = Image.open(BytesIO(url.content))
+    mask = np.array(img)      
+    stopwords = set(STOPWORDS) # créer la liste des stopwords
+    stopwords.update(["à", "de", "en", "pièce", "2p"])
+    text = " ".join(article for article in df_result['product name']) # transformer en liste la colonne 'product name'
+    text_new = re.sub(pattern='[^\w\s]', repl=' ', string=text) # enlever les chiffres
+    # Créer un image de wordcloud
+    wordcloud = WordCloud(stopwords=stopwords, 
+                          background_color="white", 
+                          max_words=30, 
+                          collocations=False, 
+                          contour_color='#FFCF00',
+                          contour_width = 0.00001,
+                          min_font_size = 7,
+                          prefer_horizontal = 1,
+                          mask = mask).generate(text_new)
+    # Afficher le wordcloud
+    fig, ax = plt.subplots(1,1)
+    ax.imshow(wordcloud.recolor(color_func=lambda *args, **kwargs: (255, 0, 205)), 
+              interpolation='bilinear')
+    ax.axis("off")
+    st.sidebar.pyplot(fig.figure)
 
     #Pour sélectionner le graphique que l'on souhaite voir : 
     type_graphique = st.selectbox("",("Carte de France","Carte par Département","Matières","Couleur"))
@@ -68,18 +108,26 @@ if page == "Graphique":
                                                            "Urbain":["mean"]})
         vote_loca_df = df_result[["Département","action"]] #On créé un df avec département et action (dans client_loca_df on supprime les duplicats d'user donc on perd l'information des différents votes par user, on est donc obligé de recréer ce dataframe)
         vote_loca_df["action"] = vote_loca_df["action"].apply(lambda x : 0 if x =="dislike" else 1) #On numérise la colonne action
-        vote_loca_df = vote_loca_df.groupby("Département").agg(lambda x : round(100-(x.mean()*100),2)) #On regroupe les informations par département en calculant le % de like
-
+        vote_loca_df = vote_loca_df.groupby("Département").agg(lambda x : round(x.mean()*100,2)) #On regroupe les informations par département en calculant le % de like
+        votant_df = df_result[["Département","action"]]#On créé un df avec département et action (dans client_loca_df on supprime les duplicats d'user donc on perd l'information des différents votes par user, on est donc obligé de recréer ce dataframe)
+        votant_df = votant_df.groupby("Département").agg("count") #Avoir le nombre de vote
         df_result = pd.merge(client_loca_df,vote_loca_df,left_on = "Département",right_on = "Département") #on regroupe les deux dataframes pour avoir toutes les informations par département
-        df_result = df_result.drop("In") #On supprime les départements inconnu
+        df_result = pd.merge(df_result,votant_df,left_on = "Département",right_on = "Département") #on regroupe les deux dataframes pour avoir toutes les informations par département
+        df_result = df_result.drop("na") #On supprime les départements inconnu
         df_result = df_result.reset_index() #On met les index "Département" en colonne
-        df_result.columns = ["Département","nb_Client","Âge","Urbain","%Like"] #On renomme les colonnes
+        df_result.columns = ["Département","nb_Client","Âge","Urbain","%Like","nb_Vote"] #On renomme les colonnes
         if table:
             st.write("Tableau de données du graphique :")
             df_result
         
         #On import le fichier geojson qui sert à tracer les départements: 
         state_geo = json.loads(requests.get("https://france-geojson.gregoiredavid.fr/repo/departements.geojson").text)
+        for idx in range(0,len(state_geo["features"])): #Pour tout les pays du fichier json on créé la donnée vide nb_wines
+            state_geo["features"][idx]['properties']["nb_Client"]= 0
+            state_geo["features"][idx]['properties']["Âge"]= 0
+            state_geo["features"][idx]['properties']["Urbain"]= 0
+            state_geo["features"][idx]['properties']["%Like"]= 0
+            state_geo["features"][idx]['properties']["nb_Vote"]= 0
         for idx in range(0,len(state_geo["features"])): #Pour tout les départements du fichier json:
             for index in range(0,len(df_result)): #Pour tout les départements du df_result :
                 if str(state_geo["features"][idx]['properties']['code'])==str(df_result.iloc[index,0]): #Si les deux idx et index concorde : alors on modifie le fichier Json pour ajouter les valeurs aux départements
@@ -88,9 +136,9 @@ if page == "Graphique":
                     state_geo["features"][idx]['properties']['Âge'] = \
                     round(df_result['Âge'][index],2) #Ajout de l'age moyen des clients dans le fichier Json
                     state_geo["features"][idx]['properties']['Urbain'] = \
-                    str(round(100*df_result['Urbain'][index],2)) + " %" #Ajout de la provenance des clients dans le fichier Json
+                    str(round(df_result['Urbain'][index],2)) + " %" #Ajout de la provenance des clients dans le fichier Json
                     state_geo["features"][idx]['properties']['%Like'] = \
-                    str(round(df_result['%Like'][index],2))+" %" #Ajout du %Like moyen des clients dans le fichier Json
+                    str(round(df_result['%Like'][index],2))+" %, nb_Vote : " + str(df_result['nb_Vote'][index]) #Ajout du %Like moyen des clients dans le fichier Json
 
         #On créé un dictionnaire pour faire la traduction entre les noms de colonne et Comment on veut faire apparaître sur la page streamlit:
         dicts = {"Nombre de Praedicters":'nb_Client',
@@ -131,7 +179,8 @@ if page == "Graphique":
     if type_graphique =="Carte par Département":
         df_result["Département"] = df_result["zipcode"].apply(lambda x : x[:2]) #On créé la colonne département à partir des deux premiers chiffres du zipcode
         df_result["Urbain"] = df_result["Urbain"]*100 #On met en pourcentage la colonne "Urbain"
-        df_result = df_result[df_result["Département"] != "In"] #On enlève les lignes où le département est inconnu
+        df_result = df_result[df_result["Département"] != "na"] #On enlève les lignes où le département est inconnu
+        df_result = df_result[df_result["Département"] != "98"] #On enlève les lignes où le département est inconnu
         #Sélecteur du numéro de département:
         Département = st.selectbox('Quel numéro de département souhaitez-vous ? ', tuple(sorted(df_result["Département"].unique())))
         postal_df = df_result[df_result["Département"] == str(Département)] #On filtre sur le département choisi
@@ -197,72 +246,79 @@ if page == "Graphique":
         folium_static(m)
     
     #######################GRAPHIQUE DES MATIERES :  
+    # On affiche la table Matières si l'onglet Matières a été choisi
     if type_graphique =="Matières":  
+        # enlever les crochets et virgules de la colonne Matières
         df_result['material'] = df_result['material'].apply(lambda x: x.replace('[','')).apply(lambda x: x.replace(']','')).apply(lambda x: x.replace("'",'')).apply(lambda x: x.replace(",",' '))
+        # créer un nouveau dataframe en groupant les articles par matières et action(like/dislike)
         df_total = df_result.groupby(["material", 'action'])\
             .count()[["product name"]]\
             .unstack(level=-1)\
             .sort_values(by=('product name','like'))\
             .tail(10)
+        # transformer le dataframe de multi-index en mono-index pour faire du plotly
         df_total.columns = df_total.columns.map('_'.join)
+        # afficher le dataframe si l'on choisit de regarder le table
         if table:
             st.write("Tableau de données du graphique :")
             df_total
+        # créer des graphiques affichant le pourcentage de like et dislike en fonction de matières
         fig = go.Figure(data=[
-                go.Bar(name= 'Like', 
-                       y=df_total.index.get_level_values(0), 
-                       x = df_total['product name_like'], 
-                       orientation='h',
-                       marker=dict(color = 'gold')),
-                go.Bar(name= 'Dislike', 
-                       y=df_total.index.get_level_values(0), 
-                       x = df_total['product name_dislike'], 
-                       orientation='h',
-                       marker=dict(color = 'deeppink'))])                              
-        fig.update_layout(barmode='group',
-                            title_text=f'Nombre de vote pour la campagne {Type_Campaign}',
-                            font = dict(size = 16),
-                            xaxis_title = "Nombre de vote",
-                            yaxis_title = "Matières")
-        st.plotly_chart(fig)        
+                go.Bar(name= 'Like', # créer la barre des Like
+                       y=df_total.index.get_level_values(0), # l'axe des matières
+                       x = df_total['product name_like'], # l'axe du nombre de Like
+                       orientation='h', # mettre l'orientation à l'horizontal
+                       marker=dict(color = 'gold')), # choisir la couleur jaune
+                go.Bar(name= 'Dislike', # créer la barre des Dislike
+                       y=df_total.index.get_level_values(0), # l'axe des matières
+                       x = df_total['product name_dislike'], # l'axe du nombre de Dislike
+                       orientation='h', # mettre l'orientation à l'horizontal
+                       marker=dict(color = 'deeppink'))])  # choisir la couleur rose                          
+        # personnaliser le graphique
+        fig.update_layout(barmode='group', # mode de disposition des barres (côte à côte)
+                            title_text=f'Nombre de vote pour la campagne {Type_Campaign}', # titre de graphique
+                            font = dict(size = 16), # taille du police
+                            xaxis_title = "Nombre de vote", # titre de l'axe x
+                            yaxis_title = "Matières") # titre de l'axe y
+        st.plotly_chart(fig)  #afficher le graphique        
 
     #######################color########################### :    
     if type_graphique == "Couleur":
-        col1, col2 = st.columns(2)
+        col1, col2 = st.columns(2)# pour avoir deux graphique cote à cote 
         with col1:
             df1= df_result.groupby(["campaign_id","action"])\
-                          .sum()[["neutre","vif"]].unstack()\
-                          .sort_values(by =["campaign_id"],ascending = True)
-            df1['neutre', 'dislike']=df1['neutre', 'dislike']*(-1)
+                            .sum()[["neutre","vif"]].unstack()\
+                            .sort_values(by =["campaign_id"],ascending = True)# crée un dataframe regrouper par campagne_id et action de votes pour les couleurs
+            df1['neutre', 'dislike']=df1['neutre', 'dislike']*(-1)# multiplié par -1 pour les colonnes dislikes pour avoir 2 coté like et dislikes sur le graphique
             df1['vif', 'dislike']=df1['vif', 'dislike']*(-1)
             df1.columns = df1.columns.map('_'.join)
             if table:
-                st.write("Tableau de données du graphique :")
-                df1
+                st.write("Tableau de données du graphique :")# pour afficher la table qu'on viens de crée
+                df1 
             fig = go.Figure(data=[
-                go.Bar(name= 'Like-neutre', y=df1.index.get_level_values(0), x = df1['neutre_like'], orientation='h',marker=dict(color = 'lawngreen')),
-                go.Bar(name= 'Dislike-neutre', y=df1.index.get_level_values(0), x = df1['neutre_dislike'], orientation='h',marker=dict(color = 'pink')),
-                go.Bar(name= 'Like-vif', y=df1.index.get_level_values(0), x = df1['vif_like'], orientation='h',marker=dict(color = 'gold')),
-                go.Bar(name= 'Dislike-vif', y=df1.index.get_level_values(0), x = df1['vif_dislike'], orientation='h',marker=dict(color = 'deeppink'))
+                go.Bar(name= 'Like-neutre', y=df1.index.get_level_values(0), x = df1['neutre_like'], orientation='h',marker=dict(color = 'lawngreen')),# pour mettre la couleur lawngreen pour les bars like-neutre
+                go.Bar(name= 'Dislike-neutre', y=df1.index.get_level_values(0), x = df1['neutre_dislike'], orientation='h',marker=dict(color = 'pink')),#pour mettre la couleur pink pour les bars dislike-neutre
+                go.Bar(name= 'Like-vif', y=df1.index.get_level_values(0), x = df1['vif_like'], orientation='h',marker=dict(color = 'gold')),#pour mettre la couleur gold pour les bars like-vif
+                go.Bar(name= 'Dislike-vif', y=df1.index.get_level_values(0), x = df1['vif_dislike'], orientation='h',marker=dict(color = 'deeppink'))#pour mettre la couleur deeppink pour les bars dislike-vif
             ])                              
             fig.update_layout(barmode='group',
-                              title_text="Nombre de vote like, dislike selon les couleurs et  par campagne ",
+                              title_text="Nombre de vote like, dislike selon les couleurs et  par campagne ",# titre du graphique
                               font = dict(size = 16),
-                              xaxis_title = "Nombre de vote",
-                              yaxis_title = "campagne_id ",
+                              xaxis_title = "Nombre de vote",# titre pour x
+                              yaxis_title = "campagne_id ",# titre pour y
                               width=700,
                               height=550)
             st.plotly_chart(fig)  
         with col2:
-            df_result['color'] = df_result['color'].apply(lambda x: x.replace('[','')).apply(lambda x: x.replace(']','')).apply(lambda x: x.replace("'",''))
+            df_result['color'] = df_result['color'].apply(lambda x: x.replace('[','')).apply(lambda x: x.replace(']','')).apply(lambda x: x.replace("'",''))# dans la table résult les couleurs apparaitre sous forme de list exemple [noir], on vas donc enlever les crochés pour que ca  devient noir
             df1=  df_result.groupby(["color", 'action'])\
                           .count()[["product name"]]\
                           .unstack()\
                           .sort_values(by=('product name','dislike'))\
-                          .tail(10)
+                          .tail(10)# pour avoir une table avec les 10 coleurs les plus présenter et les votes pour ces couleurs
             df1.columns = df1.columns.map('_'.join)
             if table:
-                st.write("Tableau de données du graphique :")
+                st.write("Tableau de données du graphique :")# pour afficher la table en fonction des couleurs les plus présenter et les nb de votes 
                 df1
             fig = go.Figure(data=[
                 go.Bar(name= 'Like', y=df1.index.get_level_values(0), x = df1['product name_like'], orientation='h',marker=dict(color = 'gold')),
@@ -282,11 +338,11 @@ if page == "Cluster":
     #Puis défini le link à prendre en fonction du choix : 
     Type_Campaign = st.sidebar.radio("Sélectionner le Type de Campagne à clusteriser :",("Mode","Déco","Cosmétique"))
     if Type_Campaign == "Mode":
-        link = "https://raw.githubusercontent.com/FlorianMimolle/matchmarket/main/Streamlit/df_Fashion.csv"
+        link = "https://raw.githubusercontent.com/FlorianMimolle/matchmarket/main/Streamlit/Fashion.csv"
     if Type_Campaign == "Déco":
-        link = "https://raw.githubusercontent.com/FlorianMimolle/matchmarket/main/Streamlit/df_Deco.csv"
+        link = "https://raw.githubusercontent.com/FlorianMimolle/matchmarket/main/Streamlit/Deco.csv"
     if Type_Campaign == "Cosmétique":
-        link = "https://raw.githubusercontent.com/FlorianMimolle/matchmarket/main/Streamlit/df_Cosme.csv" 
+        link = "https://raw.githubusercontent.com/FlorianMimolle/matchmarket/main/Streamlit/Cosmetique.csv" 
     df = pd.read_csv(link,low_memory=False) #Puis défini le df en fonction du link choisi
     
     #Compte le nombre de cluster différent dans la table sélectionnée (car le nombre de cluster peut varier entre les tables) et les mets en format liste:
@@ -349,14 +405,14 @@ if page == "Cluster":
             st.plotly_chart(fig) 
         ##############GRAPHIQUE POURCENTAGE DE MILIEU URBAIN :
         with col3:
-            labels = ["Supérieur à 2000 hab","Inférieur à 2000 hab"] #Label pour la légende
+            labels = ["Supérieur à 5000 hab","Inférieur à 5000 hab"] #Label pour la légende
             values = np.array([round(df_result["Urbain"].mean()*100,2),100-round(df_result["Urbain"].mean()*100,2)]) #Créer un array avec le% de personnes urbains et le % de personnes rurales
             fig = go.Figure(data=[go.Pie(labels=labels, #Créer le camembert avec la legénde
                                      values=values, #les deux % (ruraux et urbain)
                                      hole=.5, #Pour faire un donut plutôt qu'un camembert
                                      marker_colors=["deeppink","gold"], #Met les deux couleurs Urbain/Rural
                                      pull=[0.2, 0])], #pour exploder (décaller) la part Urbain 
-                            layout={"title":"Pourcentage de personnes<br>venant de villes suppérieur à 2000 hab"}) #Titre du graphique
+                            layout={"title":"Pourcentage de personnes<br>venant de villes suppérieur à 5000 hab"}) #Titre du graphique
             fig.update_layout(font = dict(size = 16),
                               width = 500,
                               legend_title = "Ville") #Titre du bloc légende
@@ -366,84 +422,85 @@ if page == "Cluster":
         col1,col2 = st.columns((1,4))
         with col1:
             pref_for_ages = st.radio("Préférences exprimées",
-                                     ('Préférence stylistique', 'Marques de Beauté préférées',"Marques de Mode préférées"))
+                                     ('Préférence stylistique', 'Marques de Beauté préférées',"Marques de Mode préférées")) #Bouton pour la sélection des préférences de styles ou de marques choisies par les praedicters
         with col2:
-            df_agescut = df_result.copy()
+            df_agescut = df_result.copy() #Création d'un nouveau DataFrame pour la transformation des données de sorte à obtenir des tranches d'âges par praedicter
             df_agescut['Age'] = pd.cut(df_agescut['Age'], 
-                                       bins = [0, 20, 25, 30, 40, 60, 100], 
-                                       labels=["moins de 20 ans", "20 à 24 ans", "25 à 29 ans", "30 à 39 ans", "40 à 59 ans", "60 ans et plus"])
-            if pref_for_ages == 'Préférence stylistique':
-                df_agescut = df_agescut.groupby('Age')[['Casual, Urbancool, Streetwear, Kawaii', 'Chic, Smart, Working Girl', 'Rock, Gothique', 'Engagée, Made in France', 'Fatale', 'Bohême, Romantique', 'Vintage', 'Inconnu']].agg('sum')
-                df_agescut_new = df_agescut.copy()
-                for e in df_agescut.index:
-                    somme = df_agescut.loc[e,:].sum()
-                    for i in df_agescut.columns:
-                        df_agescut_new.loc[e,i] = df_agescut.loc[e,i]/somme*100
-                df_agescut_new.reset_index(inplace=True)
-                fig = px.bar(df_agescut_new, 
+                                       bins = [0, 20, 25, 30, 40, 60, 100], #Nouvelles tranches d'âges : 0-20, 20-25, 25-30, 30-40, 40-60 et 60-100
+                                       labels=["moins de 20 ans", "20 à 24 ans", "25 à 29 ans", "30 à 39 ans", "40 à 59 ans", "60 ans et plus"]) #Labels des tranches d'âges correspondants aux bins
+            if pref_for_ages == 'Préférence stylistique': #Condition : si l'utilisateur a sélectionné les préférences stylistiques (variable pref_for_ages précédemment définie par le bouton radio)
+                df_agescut = df_agescut.groupby('Age')[['Casual, Urbancool, Streetwear', 'Chic, Smart, Working Girl', 'Rock, Gothique', 'Engagée, Made in France', 'Fatale', 'Bohême, Romantique', 'Vintage, Kawaii', 'Inconnu']].agg('sum')
+                #Regroupement par ages
+                df_agescut_new = df_agescut.copy() #On créé une nouvelle table qui permettra de calculer le pourcentage des observations par style et par tranche d'âge rapportées au nombre total d'observations par tranche d'âge
+                for e in df_agescut.index: #On se sert d'une boucle pour récupérer la somme des observations associée à chaque tranche d'âge. Sur la table, 1 ligne = 1 tranche d'âge
+                    somme = df_agescut.loc[e,:].sum() #ici, e = tranche d'âge (ligne)
+                    for i in df_agescut.columns: #Pour chaque ligne, soit chaque tranche d'âge, on calcule le % en divisant chaque observation par style et par tranche d'âge par le nombre total d'observations
+                        df_agescut_new.loc[e,i] = df_agescut.loc[e,i]/somme*100 #ici, e = tranche d'âge (ligne) et i = style (colonne)
+                df_agescut_new.reset_index(inplace=True) #On fait basculer les tranches d'âge précédemment situées en index dans les colonnes de la table
+                fig = px.bar(df_agescut_new, #Création d'un stacked barplot, orienté à l'horizontal. x correspond au nom des colonnes et y à la tranche d'âge
                              y = "Age", 
-                             x = ['Casual, Urbancool, Streetwear, Kawaii', 'Chic, Smart, Working Girl', 'Rock, Gothique', 'Engagée, Made in France', 'Fatale', 'Bohême, Romantique', 'Vintage', 'Inconnu'], 
+                             x = ['Casual, Urbancool, Streetwear', 'Chic, Smart, Working Girl', 'Rock, Gothique', 'Engagée, Made in France', 'Fatale', 'Bohême, Romantique', 'Vintage, Kawaii', 'Inconnu'], 
                              orientation='h', 
                              color_discrete_sequence= px.colors.sequential.Plasma_r)
-                fig.update_layout(title = "Préférences stylistique en fonction de la tranche d'âge des utilisateurs",
-                              xaxis_title = "Pourcentage d'utilisateurs",
+                fig.update_layout(title = "Préférences stylistique en fonction de la tranche d'âge des utilisateurs", #Ajout du titre du graphe
+                              xaxis_title = "Pourcentage d'utilisateurs", #titre des axes
                               yaxis_title = "Tranches d'âges des utilisateurs",
-                              legend_title = "Préférence stylistique",
-                              height = 400,
+                              legend_title = "Préférence stylistique", #titre de la légende 
+                              height = 400, #dimensions du graphe
                               width = 1000,
-                              font = dict(size = 16))
+                              font = dict(size = 16)) #taille de la police
                 st.plotly_chart(fig)
-            elif pref_for_ages == "Marques de Beauté préférées" :
-                df_agescut = df_agescut.groupby('Age')[['access_brand', 'mass_brand', 'premium_brand', 'hdg_brand', 'luxe_brand', 'bio_brand']].agg('sum')
+            elif pref_for_ages == "Marques de Beauté préférées" : #Condition : si l'utilisateur a sélectionné les marques de beauté (variable pref_for_ages précédemment définie par le bouton radio)
+                df_agescut = df_agescut.groupby('Age')[['access_brand', 'mass_brand', 'premium_brand', 'hdg_brand', 'luxe_brand', 'bio_brand']].agg('sum') #Regroupement par ages
                 df_agescut.columns = ["Access","Mass","Premium","Haut de Gamme","Luxe","Bio"]
-                df_agescut_new = df_agescut.copy()
-                for e in df_agescut.index:
-                    somme = df_agescut.loc[e,:].sum()
-                    for i in df_agescut.columns:
-                        df_agescut_new.loc[e,i] = df_agescut.loc[e,i]/somme*100
-                df_agescut_new.reset_index(inplace=True)
-                fig = px.bar(df_agescut_new, 
+                df_agescut_new = df_agescut.copy() #On créé une nouvelle table qui permettra de calculer le pourcentage des observations par marque et par tranche d'âge rapportées au nombre total d'observations par tranche d'âge
+                for e in df_agescut.index: #On se sert d'une boucle pour récupérer la somme des observations associée à chaque tranche d'âge. Sur la table, 1 ligne = 1 tranche d'âge
+                    somme = df_agescut.loc[e,:].sum() #ici, e = tranche d'âge (ligne)
+                    for i in df_agescut.columns: #Pour chaque ligne, soit chaque tranche d'âge, on calcule le % en divisant chaque observation par marque et par tranche d'âge par le nombre total d'observations
+                        df_agescut_new.loc[e,i] = df_agescut.loc[e,i]/somme*100 #ici, e = tranche d'âge (ligne) et i = gamme de produit (colonne)
+                df_agescut_new.reset_index(inplace=True) #On fait basculer les tranches d'âge précédemment situées en index dans les colonnes de la table
+                fig = px.bar(df_agescut_new, #Création d'un stacked barplot, orienté à l'horizontal. x correspond au nom des colonnes (gammes) et y à la tranche d'âge
                              y = "Age", 
                              x = ['Access', 'Mass', 'Premium', 'Haut de Gamme', 'Luxe', 'Bio'], 
                              orientation='h', 
                              color_discrete_sequence= px.colors.sequential.Plasma_r)
-                fig.update_layout(title = "Catégories de marques préférées en fonction de la tranche d'âge des utilisateurs",
-                              xaxis_title = "Pourcentage d'utilisateurs",
+                fig.update_layout(title = "Catégories de marques préférées en fonction de la tranche d'âge des utilisateurs", #Ajout du titre du graphe
+                              xaxis_title = "Pourcentage d'utilisateurs", #titre des axes
                               yaxis_title = "Tranches d'âges  des utilisateurs",
-                              legend_title = "Catégories préférencielles",
-                              height = 400,
+                              legend_title = "Catégories préférencielles",  #titre de la légende
+                              height = 400, #dimensions du graphe
                               width = 1000,
-                              font = dict(size = 16))
+                              font = dict(size = 16)) #taille de la police
                 st.plotly_chart(fig)
-            else :
-                df_agescut = df_agescut.groupby('Age')[['access_mode', 'mass_market', 'premium_mode', 'hdg_mode',"prestige_mode", 'luxe_mode', "vintage_mode","eco_responsable_mode"]].agg('sum')
+            else : #Condition : si l'utilisateur a sélectionné les marques de mode (variable pref_for_ages précédemment définie par le bouton radio)
+                df_agescut = df_agescut.groupby('Age')[['access_mode', 'mass_mode', 'premium_mode', 'hdg_mode',"prestige_mode", 'luxe_mode', "vintage_mode","eco_responsable_mode"]].agg('sum')
                 df_agescut.columns = ["Access","Mass","Premium","Haut de Gamme","Prestige","Luxe","Vintage","Eco Responsable"]
-                df_agescut_new = df_agescut.copy()
-                for e in df_agescut.index:
+                df_agescut_new = df_agescut.copy() #On créé une nouvelle table qui permettra de calculer le pourcentage des observations par marque et par tranche d'âge rapportées au nombre total d'observations par tranche d'âge
+                for e in df_agescut.index: #On se sert d'une boucle pour récupérer la somme des observations associée à chaque tranche d'âge. Sur la table, 1 ligne = 1 tranche d'âge
                     somme = df_agescut.loc[e,:].sum()
-                    for i in df_agescut.columns:
-                        df_agescut_new.loc[e,i] = df_agescut.loc[e,i]/somme*100
-                df_agescut_new.reset_index(inplace=True)
+                    for i in df_agescut.columns: #Pour chaque ligne, soit chaque tranche d'âge, on calcule le % en divisant chaque observation par marque et par tranche d'âge par le nombre total d'observations
+                        df_agescut_new.loc[e,i] = df_agescut.loc[e,i]/somme*100 #ici, e = tranche d'âge (ligne) et i = gamme de produit (colonne)
+                df_agescut_new.reset_index(inplace=True) #Création d'un stacked barplot, orienté à l'horizontal. x correspond au nom des colonnes (gammes) et y à la tranche d'âge
                 fig = px.bar(df_agescut_new, 
                              y = "Age", 
                              x = ["Access","Mass","Premium","Haut de Gamme","Prestige","Luxe","Vintage","Eco Responsable"], 
                              orientation='h', 
                              color_discrete_sequence= px.colors.sequential.Plasma_r)
-                fig.update_layout(title = "Catégories de marques préférées en fonction de la tranche d'âge des utilisateurs",
-                              xaxis_title = "Pourcentage d'utilisateurs",
+                fig.update_layout(title = "Catégories de marques préférées en fonction de la tranche d'âge des utilisateurs", #Ajout du titre du graphe
+                              xaxis_title = "Pourcentage d'utilisateurs", #titre des axes
                               yaxis_title = "Tranches d'âges  des utilisateurs",
-                              legend_title = "Catégories préférencielles",
-                              height = 400,
+                              legend_title = "Catégories préférencielles", #titre de la légende 
+                              height = 400, #dimensions du graphe
                               width = 1000,
-                              font = dict(size = 16))
+                              font = dict(size = 16)) #taille de la police
                 st.plotly_chart(fig)
         
         col1,col2,col3 = st.columns(3)
         ##############GRAPHIQUE STYLE PREFERENCE :        
         with col1:
-            df_style = df_result[["Casual, Urbancool, Streetwear, Kawaii","Chic, Smart, Working Girl","Rock, Gothique","Engagée, Made in France","Fatale","Bohême, Romantique","Vintage","Inconnu","cluster"]] #Créé un dataframe avec que les colonnes nécessaires     
+            df_style = df_result[["Casual, Urbancool, Streetwear","Chic, Smart, Working Girl","Rock, Gothique","Engagée, Made in France","Fatale","Bohême, Romantique","Vintage, Kawaii","Inconnu","cluster"]] #Créé un dataframe avec que les colonnes nécessaires     
             df_style = df_style.groupby("cluster").mean().reset_index() #Regroupe les informations par cluster (aggrégation : moyenne)
-            categories=["Casual,UrbanC,Streetw,Kawaii","Chic, Smart, Working Girl","Rock, Gothique","Engagée, Made in France","Fatale","Bohême, Romantique","Vintage","Inconnu"] #Créer une liste de label pour la légende
+            categories=["Casual,UrbanCool,Streetwear","Chic, Smart, Working Girl","Rock, Gothique","Engagée, Made in France","Fatale","Bohême, Romantique","Vintage, Kawaii","Inconnu"] #Créer une liste de label pour la légende
             couleur = ["gold","deeppink","orange","lemonchiffon"] #Créer la liste de couleur pour différencier les clusters
             #Pour chacun des clusters choisis (df_style est créé à partir de df_result, donc les clusters non choisis sont déjà enlevés)
             data = []
@@ -488,9 +545,9 @@ if page == "Cluster":
             st.plotly_chart(fig) #Pour afficher le graphique
         ##############GRAPHIQUE MARQUES DE MODE PREFEREES:     
         with col3:
-            df_mode = df_result[["access_mode","mass_market","premium_mode","hdg_mode","hdg_mode","prestige_mode","luxe_mode","vintage_mode","eco_responsable_mode","cluster"]] #Créé un dataframe avec que les colonnes nécessaires       
+            df_mode = df_result[["access_mode","mass_mode","premium_mode","hdg_mode","hdg_mode","prestige_mode","luxe_mode","vintage_mode","eco_responsable_mode","cluster"]] #Créé un dataframe avec que les colonnes nécessaires       
             df_mode = df_mode.groupby("cluster").mean().reset_index() #Regroupe les informations par cluster (aggrégation : moyenne)
-            categories=["access","mass_market","premium","hdg","hdg","prestige","luxe","vintage","eco_responsable"] #Créer une liste de label pour la légende
+            categories=["access","mass_mode","premium","hdg","hdg","prestige","luxe","vintage","eco_responsable"] #Créer une liste de label pour la légende
             couleur = ["gold","deeppink","orange","lemonchiffon"] #Créer la liste de couleur pour différencier les clusters
             #Pour chacun des clusters choisis (df_mode est créé à partir de df_result, donc les clusters non choisis sont déjà enlevés)
             data = []
