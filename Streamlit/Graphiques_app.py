@@ -517,7 +517,7 @@ if page == "Cluster":
                                    marker_color = f"{couleur[cluster_i]}")) #Applique la couleur à chacun des clusters
             fig = go.Figure(data=data) # on regroupe tous les graphiques en bar créé par la boucle
             fig.update_xaxes(tickangle=-90) #Pour mettre les labels x à la verticale
-            fig.update_layout(title = "Nombre de Sélection moyen par catégorie", #Titre du graphique
+            fig.update_layout(title = "Nombre de Sélection moyen<br>par catégorie", #Titre du graphique
                               yaxis_title = "Nombre de Sélection moyen", #Label y
                               legend_title = "Cluster", #Titre du bloc légende
                               height = 550, #Hauteur du graphique (afin que les trois graphiques en bar de la page soient homogènes)
@@ -539,7 +539,7 @@ if page == "Cluster":
                 data.append(go.Bar(name=f'cluster {df_brand.iloc[cluster_i,0]}', x=categories, y=liste,marker_color = f"{couleur[cluster_i]}")) #On créer différents graphiques en bar, name : sert à identifier les différents clusters
             fig = go.Figure(data=data) # on regroupe tous les graphiques en bar créé par la boucle
             fig.update_xaxes(tickangle=-90) #Pour mettre les labels x à la verticale
-            fig.update_layout(title = "Nombre de Sélection moyen par Préférence de<br>Marque de Beauté", #Titre du graphique
+            fig.update_layout(title = "Nombre de Sélection moyen<br>par Préférence de Marque de Beauté", #Titre du graphique
                               yaxis_title = "Nombre de Sélection moyen", #Label y
                               legend_title = "Cluster", #Titre du bloc légende
                               height = 425, #Hauteur du graphique (afin que les trois graphiques en bar de la page soient homogènes)
@@ -561,7 +561,7 @@ if page == "Cluster":
                 data.append(go.Bar(name=f'cluster {df_mode.iloc[cluster,0]}', x=categories, y=liste,marker_color = f"{couleur[cluster]}")) #On créer différents graphiques en bar, name : sert à identifier les différents clusters
             fig = go.Figure(data=data) # on regroupe tous les graphiques en bar créé par la boucle
             fig.update_xaxes(tickangle=-90) #Pour mettre les labels x à la verticale
-            fig.update_layout(title = "Nombre de Sélection moyen par Préférence de<br>Marque de Mode", #Titre du graphique
+            fig.update_layout(title = "Nombre de Sélection moyen<br>par Préférence de Marque de Mode", #Titre du graphique
                               yaxis_title = "Nombre de Sélection moyen", #Label y
                               legend_title = "Cluster", #Titre du bloc légende
                               width = 400,
