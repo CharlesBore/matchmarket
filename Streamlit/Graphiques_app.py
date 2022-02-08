@@ -279,7 +279,8 @@ if page == "Graphique":
                             title_text=f'Nombre de vote pour la campagne {Type_Campaign}', # titre de graphique
                             font = dict(size = 16), # taille du police
                             xaxis_title = "Nombre de vote", # titre de l'axe x
-                            yaxis_title = "Matières") # titre de l'axe y
+                            yaxis_title = "Matières",
+                         autosize = True) # titre de l'axe y
         st.plotly_chart(fig)  #afficher le graphique        
 
     #######################color########################### :    
