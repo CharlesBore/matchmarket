@@ -402,7 +402,7 @@ if page == "Cluster":
             fig.update_layout(title_text="Distribution de l'Age", #Titre du graphique
                               font = dict(size = 14),#Pour mettre une police un peu plus grosse
                               width = 470,
-                              height = 500,
+                              height = 400,
                               yaxis_title = "Nombre de clients", #Label de y
                               xaxis_title = "Âge") #Label de x
             st.plotly_chart(fig) 
@@ -415,7 +415,7 @@ if page == "Cluster":
                                      hole=.5, #Pour faire un donut plutôt qu'un camembert
                                      marker_colors=["deeppink","gold"], #Met les deux couleurs Urbain/Rural
                                      pull=[0.2, 0])], #pour exploder (décaller) la part Urbain 
-                            layout={"title":"Provencance des Praedicters"}) #Titre du graphique
+                            layout={"title":"Provenance des Praedicters"}) #Titre du graphique
             fig.update_layout(font = dict(size = 14),
                               width = 470,
                               legend_title = "Commune") #Titre du bloc légende
