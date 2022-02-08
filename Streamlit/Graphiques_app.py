@@ -598,9 +598,10 @@ if page == "Cluster":
                         color_discrete_map={'Like': 'gold','Dislike': 'deeppink'},
                         labels={"x": "critère ciblé", #On supprime le label de l'axe x car cela est déjà identifié par le type de catégories
                                 "y": "Nombre de vote", #Label de l'axe y
-                                "color":"Type de vote"}, #Titre du bloc de legende
+                                "color":"Type de votes"}, #Titre du bloc de legende
                         title = "nombre de Like/Dislike d'articles ayant le critère ciblé") #Titre du graphique
-            fig.update_layout(font = dict(size = 16)) #Augmente la taille de la police
+            fig.update_layout(font = dict(size = 14),
+                             width = 500) #Augmente la taille de la police
             st.plotly_chart(fig) #Pour afficher le graphique
             
         ##############GRAPHIQUE LIKE/DISLIKE DES PRIX:  
@@ -624,7 +625,7 @@ if page == "Cluster":
                                 "color":"Type de vote"}, #Titre du bloc de legende
                         title = 'Prix moyen des produits Likés vs Dislikés', #Titre du graphique
                         height=250) #Hauteur du graphique pour qu'il soit pas trop large
-            fig.update_layout(font = dict(size = 16)) #Augmente la taille de la police
+            fig.update_layout(font = dict(size = 14)) #Augmente la taille de la police
             st.plotly_chart(fig) #Pour afficher le graphique
             
         ######################### GRAPHIQUE PERSONNALISABLE :
